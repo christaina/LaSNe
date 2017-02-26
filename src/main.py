@@ -290,4 +290,4 @@ if __name__ == "__main__":
             continue
         print("Processing "+filename)
         actualFilename = join(dirname, filename)
-        getD3Json(actualFilename, 'viz/'+filename.replace(".gml", ".json"), global_leaders)
+        getD3Json(actualFilename, 'viz/'+filename.replace(".gml", ".json"), None)

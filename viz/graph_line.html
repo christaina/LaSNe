@@ -17,7 +17,7 @@
 
 var color = d3.scale.category20();
 
-var width = 1400,
+var width = 700,
     height = 600;
 
 var svg = d3.select("#area1").append("svg")
@@ -95,37 +95,25 @@ var refresh = function(){
   findnthbig();
 
   svg.append("text")
-      .attr("dx", 6)
-      .attr("dy", height-12)
-      .attr("font-family", "Arial, Helvetica, sans-serif")
-      .attr("font-size",12)
-      .text(function() { return curr_graph.substring(3,curr_graph.length-14) });
+.style("fill", "black")
+    .attr("x", 150)
+    .attr("y", height-10)
+    .attr("text-anchor", "end")
+    .style('font-family','sans-serif')
+    .style('font-size','12px')
+    .text(curr_graph);
 
-  all_rts = [];
-  for(var i = 0; i < currentJson.links.length;i++){
-    curr = currentJson.links[i]
-    if ((currentJson.links[i].weight > 0) & (curr.source != curr.target)){
-
-    all_rts.push(curr.weight);}
-  }
-  day_rts = Math.max.apply(null, all_rts);
-  console.log('day max: '+day_rts);
-
+  playButton(svg);
   var force = d3.layout.force()
       // .gravity(0.1)
       // .distance(10)
-      .charge(-500)
+      .charge(-700)
       .size([width, height])
       .nodes(currentJson.nodes)
       .links(currentJson.links)
       // scale weight so distances dont get crazy
       .linkDistance(function(l){
-          //console.log(l.topBoth);
-          if(l.topBoth){
-            return Math.min(l.weight, 1);
-          } else {
-            return 0;
-          }
+          return Math.min(l.weight, 1);
         })
       .start();
 
@@ -139,8 +127,7 @@ var refresh = function(){
           return "link-"+d.source.index+"-"+d.target.index;
         })
       .append("line")
-        .style("stroke", langcolor)
-        .style("stroke-opacity",function(d){return Math.max(0.5,Math.log(d.weight)/Math.log(day_rts))});
+        .style("stroke", langcolor);
 
   var node = svg.selectAll(".node")
       .data(currentJson.nodes)
@@ -151,7 +138,6 @@ var refresh = function(){
         return "node"+d.index;
       })
       .on("mouseover", mouseover)
-      //.on('mouseover',function(d){set_highlight(d)})
       .on("mouseout",mouseout)
       .on("dblclick",dblclick)
 
@@ -293,9 +279,7 @@ var refresh = function(){
               .attr("x2", function(d) { return d.target.x; })
               .attr("y2", function(d) { return d.target.y; })
               // .style("stroke-width", function(d) { return Math.sqrt(d.weight); })
-              .style("stroke", langcolor)
-              .style("stroke-opacity",function(d){return Math.max(0.3,d.weight/
-                day_rts)});;
+              .style("stroke", langcolor);
 
         svg.selectAll(".link")
               .on("mouseover", linkOver)
@@ -358,10 +342,27 @@ var refresh = function(){
 
   force.on("tick", function() {
 
+    var minX = 0, maxX = width;
+    var minY = 0, maxY = height;
+    // var minX = currentJson.nodes[0].x, maxX = currentJson.nodes[0].x;
+    // var minY = currentJson.nodes[0].y, maxY = currentJson.nodes[0].y;
+    for(var i=0,len=currentJson.nodes.length;i<len;i++){
+      minX = Math.min(minX, currentJson.nodes[i].x);
+      maxX = Math.max(maxX, currentJson.nodes[i].x);
+      minY = Math.min(minY, currentJson.nodes[i].y);
+      maxY = Math.max(maxY, currentJson.nodes[i].y);
+    }
+
+    for(var i=0,len=currentJson.nodes.length;i<len;i++){
+      currentJson.nodes[i].x = width*(currentJson.nodes[i].x - minX) / (maxX - minX);
+      currentJson.nodes[i].y = height*(currentJson.nodes[i].y - minY) / (maxY - minY);
+    }
+
+
     // center biggest
-    biggest_idx = getbiggest(currentJson.nodes);
-    currentJson.nodes[biggest_idx].x = width / 2;
-    currentJson.nodes[biggest_idx].y = height / 2;
+    // biggest_idx = getbiggest(currentJson.nodes);
+    // currentJson.nodes[biggest_idx].x = width / 2;
+    // currentJson.nodes[biggest_idx].y = height / 2;
 
     link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
@@ -402,6 +403,19 @@ function langcolor(d){
       return "#AAAAAA";
 }
 
+function stop(){
+
+  clearTimeout(initial);
+  moving = false;
+  color_button();
+
+}
+
+function go(){
+  run_timer(allGraphs.indexOf(curr_graph));
+  moving = true;
+  color_button();
+}
 
 function color_button(){
   var color = 'red';
@@ -467,7 +481,7 @@ function dot_click(d){
 function linkOver(d, i) {
   console.log("Over", i);
   d3.select(this).select("text").transition()
-        .style("stroke-opacity", 1)
+        .style("stroke-opacity", 0.4)
         .style("fill-opacity", 1);
 }
 
@@ -665,13 +679,11 @@ function update(file){
 
     currentJson.links = json.links;
 
-
     refresh();
 
   });
 }
 var allGraphs = getAllGraphs();
-var day_rts;
 
 var graphSelect = document.getElementById("graphSelect");
 
@@ -704,11 +716,13 @@ var step = -1;
 function nextval()
 {
     step++;
-    return (300*step); // initial time, wait time
+    return (500*step); // initial time, wait time
 }
 
 var i = 1;
 var moving = true;
+
+playButton(svg);
 
 function run_timer(i){
   function timer () {
@@ -728,11 +742,12 @@ function run_timer(i){
 
 var margin = {top: 10, right: 20, bottom: 10, left: 5}
 // Parse the date / time
-var cha_ht = 100 - margin.top - margin.bottom;
+var cha_ht = 200 - margin.top - margin.bottom;
 var cha_wd = width - margin.left - margin.right;
 // Set the ranges
 var x = d3.time.scale().range([0, cha_wd]);
 var y = d3.scale.linear().range([cha_ht, 0]);
+
 
 // Define the axes
 var xAxis = d3.svg.axis().scale(x)
@@ -752,6 +767,8 @@ var cha = d3.select("#area2")
     .attr("width", cha_wd+ margin.left + margin.right)
     .attr("height", cha_ht+ margin.top + margin.bottom)
     .attr('fill','gray');
+
+    run_timer(i);
 
 </script>
 </html>

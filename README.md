@@ -1,7 +1,5 @@
-odfsThis is the repository of Capstone project.
-*-*-*
-And....its' working
+This is the repository of Capstone project.
 
+Visualization found here:
 
-Litterature Review
-  * http://www.sciencedirect.com/science/article/pii/S0378437106004638
+http://cims.nyu.edu/~ceb545/LaSNe/viz/graph_line.html
