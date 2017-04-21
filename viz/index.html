@@ -451,12 +451,12 @@ function color_button(){
 }
 
 function playButton(svg) {
-  wid = 50
-  ht = 50
+  wid = 30
+  ht = 30
   var i = 0;
 
   var button = svg.append("g")
-      .attr("transform", "translate("+ (height - ht - 5) +","+ (width - 190) +")");
+      .attr("transform", "translate("+ (height - ht +80) +","+ (width - 140) +")");
 
   button
     .append("rect")
@@ -467,12 +467,13 @@ function playButton(svg) {
 
   button
     .append("path")
-      .attr("d", "M15 10 L15 40 L35 25 Z")
+      //.attr("d", "M15 10 L15 40 L35 25 Z")
+      .attr("d", "M8 8 L8 22 L22 15 Z")
       .style("fill", function(d){if (moving){return 'white'}else{return 'red'}});
 
   button
     .append("title")
-      .text('Click to stop animation');
+      .text('Prress to stop animation');
 
   button
       .on("mousedown", function() {
@@ -485,12 +486,14 @@ function playButton(svg) {
         d3.select(this).select("rect")
             .style("fill","white")
             .transition().style("fill","gray");
-        d3.select(this).select("title").text('HELLO');
+        d3.select(this).select("title").text(function(d){ if (moving){
+          return 'Press to stop animation'} return "Press to start animation"});
       });
 
       button
           .on('mouseup',function(){
-            color_button();
+            console.log(moving)
+            d3.select(this).select("path").style("fill", function(d){if (moving){return 'white'}else{return 'red'}});
           });
 }
 
