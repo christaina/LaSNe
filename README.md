@@ -1,4 +1,4 @@
-This is the repository of Capstone project.
+This is the repository of Capstone project for my MS in Data Science from NYU with Varun DN and Alexandre Sablayrolles.
 
 Visualization found here:
 
