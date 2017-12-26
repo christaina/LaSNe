@@ -1,22 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div id="area3">
-  <select id="graphSelect"></select>
-</div>
-
-<div id="area1"></div>
-<div id="area2"></div>
-
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script type="text/javascript" src="allGraphs.js"></script>
-<script>
-
 var color = d3.scale.category20();
-
 var width = 700,
     height = 600;
 
@@ -30,7 +12,7 @@ var oldNodes;
 var linemode=false;
 var nthbig = 0;
 var maxWeight;
-
+var data_prefix="data/"
 var parseDate = d3.time.format("%Y-%m-%d").parse;
 
 function plot(){
@@ -45,7 +27,7 @@ function plot(){
         .attr("height", "100%")
         .attr("fill", "#fbfbfb");
 
-  d3.csv("rt_counts.csv", function(error, data) {
+  d3.csv("data/rt_counts.csv", function(error, data) {
     data.forEach(function(d) {
         d.file = d.file;
         d.rts = d.rts;
@@ -90,17 +72,6 @@ function plot(){
   });
 }
 
-function filterSelfLinks(link) {
-  console.log(link.source)
-  console.log(link.target)
-  if ((link.source != link.target)) {
-    return true;
-  }
-  return false;
-}
-
-
-
 
 var refresh = function(){
 
@@ -115,7 +86,7 @@ var refresh = function(){
 
 
   svg.append("text")
-.style("fill", "black")
+    .style("fill", "black")
     .attr("x", 150)
     .attr("y", height-10)
     .attr("text-anchor", "end")
@@ -136,7 +107,6 @@ var refresh = function(){
           return Math.min(l.weight, 1);
         })
       .start();
-
 
   var link = svg.selectAll(".link")
       .data(currentJson.links)
@@ -246,8 +216,6 @@ var refresh = function(){
           epochs++;
         }
 
-        console.log('pachild len '+Object.values(pa_child).length);
-
         var max_level = Math.max.apply(null,Object.keys( levels ).map(
           function ( key ) { return levels[key]; }));
         for (var i = 0; i <= max_level;i++){
@@ -300,7 +268,6 @@ var refresh = function(){
               .attr("y1", function(d) { return d.source.y; })
               .attr("x2", function(d) { return d.target.x; })
               .attr("y2", function(d) { return d.target.y; })
-              // .style("stroke-width", function(d) { return Math.sqrt(d.weight); })
               .style("stroke", langcolor)
               .style("stroke-opacity", function(d){
                 return Math.log2(d.weight+1)/Math.log2(maxWeight)});;
@@ -383,11 +350,6 @@ var refresh = function(){
     }
 
 
-    // center biggest
-    // biggest_idx = getbiggest(currentJson.nodes);
-    // currentJson.nodes[biggest_idx].x = width / 2;
-    // currentJson.nodes[biggest_idx].y = height / 2;
-
     link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
@@ -399,319 +361,8 @@ var refresh = function(){
   });
 };
 
-function bignodetext(d){
-   if(d.rts > nthbig){return d.id};
-}
 
-function getsize(d){
-  biggest = currentJson.nodes[getbiggest(currentJson.nodes)]
-  return (d.rts/(biggest.rts/8))+1;
-}
-
-function node_id_map(){
-  for (var i=0, len = oldNodes.length; i < len; i++){
-    id_idx_map[oldNodes[i].id] = i;
-  }
-}
-
-function langcolor(d){
-      if(d.weightUK / d.weight < 0.1) {
-        // purple
-        return '#a31aff';
-      }
-      if(d.weightRU / d.weight < 0.1) {
-        // blue
-        return "#0073e6";
-      }
-      // gray
-      return "#AAAAAA";
-}
-
-function stop(){
-
-  clearTimeout(initial);
-  moving = false;
-  color_button();
-
-}
-
-function go(){
-  run_timer(allGraphs.indexOf(curr_graph));
-  moving = true;
-  color_button();
-}
-
-function color_button(){
-  var color = 'red';
-  if (moving){
-    color = 'white'
-  }
-  svg.select("g").select('path')
-      .style("fill",color);
-}
-
-function playButton(svg) {
-  wid = 30
-  ht = 30
-  var i = 0;
-
-  var button = svg.append("g")
-      .attr("transform", "translate("+ (height - ht +80) +","+ (width - 140) +")");
-
-  button
-    .append("rect")
-      .attr("width", wid)
-      .attr("height", ht)
-      .attr("rx", 4)
-      .style("fill", "gray");
-
-  button
-    .append("path")
-      //.attr("d", "M15 10 L15 40 L35 25 Z")
-      .attr("d", "M8 8 L8 22 L22 15 Z")
-      .style("fill", function(d){if (moving){return 'white'}else{return 'red'}});
-
-  button
-    .append("title")
-      .text('Prress to stop animation');
-
-  button
-      .on("mousedown", function() {
-        if(moving){
-          stop();
-        }
-        else{
-          go();
-        }
-        d3.select(this).select("rect")
-            .style("fill","white")
-            .transition().style("fill","gray");
-        d3.select(this).select("title").text(function(d){ if (moving){
-          return 'Press to stop animation'} return "Press to start animation"});
-      });
-
-      button
-          .on('mouseup',function(){
-            console.log(moving)
-            d3.select(this).select("path").style("fill", function(d){if (moving){return 'white'}else{return 'red'}});
-          });
-}
-
-function dot_click(d){
-
-  d3.selectAll("svg > *").remove();
-  stop();
-  console.log(d.file)
-    update(d.file);
-}
-
-function linkOver(d, i) {
-  console.log("Over", i);
-  d3.select(this).select("text").transition()
-        .style("stroke-opacity", 0.4)
-        .style("fill-opacity", 1);
-}
-
-function linkOut(d, i) {
-  console.log("Out", i);
-  d3.select(this).select("text")
-      .transition()
-      .delay(1000)
-      .duration(1000)
-      .style("stroke-opacity", 0)
-      .style("fill-opacity", 0);
-}
-
-function mouseover(d) {
-  svg.selectAll('.node').selectAll('text').remove();
-  svg.selectAll('.node').selectAll('text.shadow').remove();
-
-  d3.select(this).select("circle")
-    .transition()
-      .duration(750).attr("r",function(d){return 3+getsize(d);})
-
-  svg.selectAll('.link')
-    .style('stroke-width',function(p){
-      if((p.source==d) || (p.target==d)){return 3 } return 1
-    })
-
-  linked_to = {};
-  rt_counts = [];
-  for (var i =0; i < currentJson.links.length; i++){
-    curr = currentJson.links[i]
-
-    if ((curr.source==d) &
-      !(curr.target.id in linked_to)){
-      //linked_to.push(currentJson.links[i].target);
-      rt_counts.push(Number(curr.target.rts));
-      linked_to[curr.target.id]=parseInt(curr.target.rts);
-    }
-    if ((curr.target==d)&!(curr.source.id in linked_to)){
-      //linked_to.push(currentJson.links[i].source);
-      rt_counts.push(Number(curr.source.rts));
-      linked_to[curr.source.id]=parseInt(curr.source.rts);
-    }
-  }
-
-  rt_counts.sort(compareNumbers);
-
-  var thr = rt_counts.length - 3;
-
-  svg.selectAll('.node')
-    .append("text")
-      .attr("class", "shadow")
-      .attr("dx", 12)
-      .attr("dy", ".35em")
-      .text(function(p) {
-        if((p.id in linked_to)&
-          ((linked_to[p.id]>=rt_counts[thr])|(thr<0))) {
-            return p.id+" : "+p.rts+" RTs"
-          }
-        });
-
-  svg.selectAll('.node')
-    .append("text")
-      .attr("class", "hover")
-      .attr("dx", 12)
-      .attr("dy", ".35em")
-      .text(function(p) {if((p.id in linked_to)&
-        ((linked_to[p.id]>=rt_counts[thr])|(thr<0))){
-        return p.id+" : "+p.rts+" RTs"}});
-
-    d3.select(this).moveToFront()
-      .append("text")
-        .attr("class", "hover")
-        .attr("class", "shadow")
-        .attr("dx", 12)
-        .attr("dy", ".35em")
-        .text(d.id+" : "+d.rts+" RTs");
-    d3.select(this).moveToFront()
-      .append("text")
-        .attr("class", "hover")
-        .attr("dx", 12)
-        .attr("dy", ".35em")
-        .text(d.id+" : "+d.rts+" RTs");
-}
-
-function mouseout(d) {
-  d3.select(this)
-    .select("circle").transition()
-          .duration(750)
-          .attr("r", function(d){return getsize(d)});
-
-
-          svg.selectAll('.node').selectAll('text.hover').remove();
-          svg.selectAll('.node').selectAll('text.shadow').remove();
-
-          svg.selectAll('.node').append("text")
-              .attr("dx", 12)
-              .attr("dy", ".35em")
-              .text(function(d) { return bignodetext(d) })
-              .attr('class','shadow');
-
-          svg.selectAll('.node').append("text")
-                  .attr("dx", 12)
-                  .attr("dy", ".35em")
-                  .text(function(d){return bignodetext(d)});
-
-  svg.selectAll('.link').style('stroke',langcolor).style('stroke-width',1)
-}
-
-function compareNumbers(a, b)
-{
-    return a - b;
-}
-
-/**
-function levelscounts(arr){
-  for(var i = 0; i < )
-}
-**/
-
-function dblclick(d){
-
-  if (linemode) {
-  d3.selectAll("svg > *").remove();
-  d3.json(curr_graph, function(error, json) {
-    // update only LINKS if change selected value
-    if (error) throw error;
-
-    currentJson.links = json.links;
-    currentJson.nodes = json.nodes;
-
-    update_pos();
-    refresh();
-    linemode = false;
-  });}
-}
-
-function update_pos(){
-
-      for (var i =0,len=currentJson.nodes.length; i < len;i++){
-
-        if(id_idx_map[currentJson.nodes[i].id]>-1){
-          currentJson.nodes[i].x = oldNodes[i].x;
-          currentJson.nodes[i].x = oldNodes[i].y;
-        }
-      }
-}
-
-function findnthbig(){
-  var allsizes = [];
-
-  for(var i=0, len=currentJson.nodes.length; i < len;i++){
-    c = Number(currentJson.nodes[i].rts);
-    if (c>0){
-      allsizes.push(c);}
-  }
-
-  allsizes.sort(compareNumbers);
-  nthbig = allsizes[allsizes.length-5];
-}
-
-function getbiggest(nodeset){
-
-  biggest_size = 0;
-  biggest = 0;
-
-  for(var i=0, len=nodeset.length; i < len;i++){
-    if (nodeset[i].rts > biggest_size){
-      biggest_size = nodeset[i].rts;
-      biggest = i;
-    }
-  }
-  return biggest;
-}
-
-function update(file){
-
-    curr_graph = file;
-
-    oldNodes = currentJson.nodes;
-    node_id_map();
-
-  d3.json(file, function(error, json) {
-    if (error) throw error;
-
-    // for (var i = 0; i < json.nodes.length; i++){
-    //   curr = json.nodes[i]
-    //   if(id_idx_map[curr.id] > -1){
-    //     currentJson.nodes[id_idx_map[curr.id]].rts = curr.rts
-    //   }
-    //   else {
-    //     currentJson.nodes.push(curr)
-    //   }
-    // }
-    currentJson.nodes = json.nodes;
-
-    currentJson.links = json.links;
-
-    refresh();
-
-  });
-}
 var allGraphs = getAllGraphs();
-
 var graphSelect = document.getElementById("graphSelect");
 
 graphSelect.onchange = function() {
@@ -731,39 +382,18 @@ for (var i=0;i<allGraphs.length;i++){
 
 
 var curr_graph = allGraphs[0];
-d3.json(curr_graph, function(error, json) {
+d3.json(data_prefix+curr_graph, function(error, json) {
   if (error) throw error;
-
   currentJson = json;
   refresh();
 
 });
 
 var step = -1;
-function nextval()
-{
-    step++;
-    return (500*step); // initial time, wait time
-}
-
 var i = 1;
 var moving = true;
 
 playButton(svg);
-
-function run_timer(i){
-  function timer () {
-     initial =  setTimeout(function () {
-        d3.selectAll("svg > *").remove();
-        update(allGraphs[i]);
-          i++;
-          if (i < allGraphs.length) {
-              timer();
-          }
-      }, 8000)
-  }
-  timer();
-}
 
 //////////////////
 
@@ -796,6 +426,3 @@ var cha = d3.select("#area2")
     .attr('fill','gray');
 
     run_timer(i);
-
-</script>
-</html>
